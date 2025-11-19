@@ -38,3 +38,29 @@ exports.authorize = (...roles) => {
     next();
   };
 };
+
+// Optional authentication - adds user info if token exists, but doesn't require it
+exports.optionalAuth = async (req, res, next) => {
+  let token;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+  
+  // If no token, just continue without user info
+  if (!token || token === "null") {
+    return next();
+  }
+  
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.id);
+  } catch (err) {
+    // Invalid token, but still allow access
+    console.log("Invalid token in optional auth:", err.message);
+  }
+  
+  next();
+};

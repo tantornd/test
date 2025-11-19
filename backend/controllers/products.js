@@ -5,7 +5,15 @@ const Product = require("../models/Product");
 // @access  Public
 exports.getProducts = async (req, res, next) => {
   try {
-    const products = await Product.find({ isActive: true });
+    // Admin users get all products (including hidden ones)
+    // Non-admin users only get active products
+    let query = {};
+    
+    if (!req.user || req.user.role !== 'admin') {
+      query.isActive = true;
+    }
+    
+    const products = await Product.find(query);
 
     res.status(200).json({
       success: true,
@@ -70,9 +78,11 @@ exports.updateProduct = async (req, res, next) => {
       });
     }
 
+    // Use runValidators: false for partial updates (e.g., toggling isActive)
+    // This allows updating individual fields without validating all required fields
     product = await Product.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
-      runValidators: true,
+      runValidators: false,
     });
 
     res.status(200).json({
@@ -80,7 +90,10 @@ exports.updateProduct = async (req, res, next) => {
       data: product,
     });
   } catch (error) {
-    next(error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Error updating product",
+    });
   }
 };
 

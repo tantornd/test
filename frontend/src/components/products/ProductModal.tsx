@@ -4,7 +4,9 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
+import { Switch } from '../ui/switch';
 import { Product } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -14,6 +16,7 @@ interface ProductModalProps {
 }
 
 export function ProductModal({ isOpen, onClose, onSave, product }: ProductModalProps) {
+  const { role } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
@@ -22,7 +25,8 @@ export function ProductModal({ isOpen, onClose, onSave, product }: ProductModalP
     price: 0,
     stockQuantity: 0,
     unit: '',
-    picture: ''
+    picture: '',
+    isActive: true
   });
 
   useEffect(() => {
@@ -35,7 +39,8 @@ export function ProductModal({ isOpen, onClose, onSave, product }: ProductModalP
         price: product.price,
         stockQuantity: product.stockQuantity,
         unit: product.unit,
-        picture: product.picture || ''
+        picture: product.picture || '',
+        isActive: product.isActive !== false
       });
     } else {
       setFormData({
@@ -46,7 +51,8 @@ export function ProductModal({ isOpen, onClose, onSave, product }: ProductModalP
         price: 0,
         stockQuantity: 0,
         unit: '',
-        picture: ''
+        picture: '',
+        isActive: true
       });
     }
   }, [product, isOpen]);
@@ -62,7 +68,7 @@ export function ProductModal({ isOpen, onClose, onSave, product }: ProductModalP
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{product ? 'Edit Product' : 'Add New Product'}</DialogTitle>
           <DialogDescription>
@@ -164,6 +170,22 @@ export function ProductModal({ isOpen, onClose, onSave, product }: ProductModalP
                 required
               />
             </div>
+
+            {role === 'admin' && (
+              <div className="flex items-center justify-between space-x-2">
+                <div className="space-y-0.5">
+                  <Label htmlFor="isActive">Product Visibility</Label>
+                  <p className="text-sm text-gray-500">
+                    {formData.isActive ? 'Product is visible to all users' : 'Product is hidden from non-admin users'}
+                  </p>
+                </div>
+                <Switch
+                  id="isActive"
+                  checked={formData.isActive}
+                  onCheckedChange={(checked: boolean) => setFormData({ ...formData, isActive: checked })}
+                />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
